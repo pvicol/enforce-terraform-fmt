@@ -1,0 +1,86 @@
+name: Run tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  run_tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: setup git
+        run: |
+          git config --global user.email "${{ github.actor }}"
+          git config --global user.name "${{ github.actor }}"
+
+      - name: test failure on no terraform version
+        id: fail_no_version
+        continue-on-error: true
+        uses: ./
+
+      - name: no terraform version failed
+        if: steps.fail_no_version.outcome != 'failure'
+        run: exit 1
+
+      - name: test failure on invalid terraform version
+        id: fail_invalid_version
+        continue-on-error: true
+        uses: ./
+        with:
+          terraform_version: asdf
+
+      - name: invalid terraform version failed
+        if: steps.fail_invalid_version.outcome != 'failure'
+        run: exit 1
+
+      - name: test failure on missing terraform version
+        id: fail_missing_version
+        continue-on-error: true
+        uses: ./
+        with:
+          terraform_version: 999.999.999
+
+      - name: missing terraform version failed
+        if: steps.fail_no_version.outcome != 'failure'
+        run: exit 1
+
+      - name: munge test.tf for a failing commit
+        run: echo "" >> test.tf
+
+      - name: commit the munged test.tf
+        run: git add . && git commit -m "running tests"
+
+      - name: test failure
+        id: failure_step
+        continue-on-error: true
+        uses: ./
+        with:
+          terraform_version: 0.14.6
+
+      - name: failure failed
+        if: steps.failure_step.outcome != 'failure'
+        run: exit 1
+
+      - name: commit the newly fmt'd files
+        run: git add . && git commit -m "running tests"
+
+      - name: test success on the new commit
+        uses: ./
+        with:
+          terraform_version: 0.14.6
+
+  check_version:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: check if tag already exists
+        run: git fetch --depth=1 origin +refs/tags/*:refs/tags/* && git rev-parse "$(cat VERSION)" >/dev/null 2>&1 && exit 1 || exit 0

@@ -1,0 +1,17 @@
+name: 'Enforce Terraform fmt'
+description: 'Status check which fails if any of the committed files have changes after running `terraform fmt`'
+branding:
+  icon: git-pull-request
+  color: purple
+inputs:
+  terraform_version:
+    description: 'The Terraform version to use'
+    required: true
+outputs:
+  diff:
+    description: 'The diff of terraform fmt changes'
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+  args:
+    - ${{ inputs.terraform_version }}
