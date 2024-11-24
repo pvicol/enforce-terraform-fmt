@@ -3,9 +3,29 @@ Status check which fails if any of the committed files have changes after runnin
 
 ## Example usage
 ```yaml
-uses: leigholiver/enforce-terraform-fmt@v1.0.0
-with:
-  terraform_version: 0.14.6
+name: Validate Terraform Code
+on:
+  pull_request:
+    paths:
+      - '**/*.tf'
+      - '**/*.tfvars'
+
+jobs:
+  tf-validate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout the contents
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: '' # all history for all branches and tags
+
+      - name: Check Terraform code formatting
+        uses: pvicol/enforce-terraform-fmt@v1.1.0
+        with:
+          terraform_version: 1.9.8
+
 ```
 
 ## Inputs

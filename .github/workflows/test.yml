@@ -12,66 +12,70 @@ jobs:
   run_tests:
     runs-on: ubuntu-latest
     steps:
+      # Check out full depth to compare file changes between commits
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: setup git
+      - name: Setup Git to allow to commit files in steps
         run: |
-          git config --global user.email "${{ github.actor }}"
+          git config --global user.email "${{ github.actor }}@users.noreply.github.com"
           git config --global user.name "${{ github.actor }}"
 
-      - name: test failure on no terraform version
+      # Expect a failure when terraform_version is not passed
+      - name: "Test: Terraform version input omitted"
         id: fail_no_version
         continue-on-error: true
         uses: ./
-
-      - name: no terraform version failed
+      - name: "Assert Failed: Terraform version input omitted"
         if: steps.fail_no_version.outcome != 'failure'
         run: exit 1
 
-      - name: test failure on invalid terraform version
+      # Raise failure when Terraform version is not valid
+      - name: "Test: Invalid Terraform version"
         id: fail_invalid_version
         continue-on-error: true
         uses: ./
         with:
           terraform_version: asdf
-
-      - name: invalid terraform version failed
+      - name: "Assert Failed: Invalid Terraform version"
         if: steps.fail_invalid_version.outcome != 'failure'
         run: exit 1
 
-      - name: test failure on missing terraform version
+      # Raise failure when a non-existent Terraform version is passed
+      - name: "Test: Missing (non-existent) Terraform version"
         id: fail_missing_version
         continue-on-error: true
         uses: ./
         with:
           terraform_version: 999.999.999
-
-      - name: missing terraform version failed
-        if: steps.fail_no_version.outcome != 'failure'
+      - name: "Assert Failed: Missing (non-existent) Terraform version"
+        if: steps.fail_missing_version.outcome != 'failure'
         run: exit 1
 
-      - name: munge test.tf for a failing commit
-        run: echo "" >> test.tf
-
-      - name: commit the munged test.tf
-        run: git add . && git commit -m "running tests"
-
-      - name: test failure
+      - name: "Modify test.tf file to introduce a formatting issue"
+        run: sed -i '2s/[[:space:]]//g' test.tf
+      - name: Commit the munged `test.tf`
+        run: |
+          git add . 
+          git commit -m "Running tests"
+      - name: "Test: Non-formatted Terraform file"
         id: failure_step
         continue-on-error: true
         uses: ./
         with:
           terraform_version: 0.14.6
-
-      - name: failure failed
+      - name: "Assert Failed: Non-formatted Terraform file"
         if: steps.failure_step.outcome != 'failure'
         run: exit 1
 
-      - name: commit the newly fmt'd files
-        run: git add . && git commit -m "running tests"
-
-      - name: test success on the new commit
+        # Commit formatted file to simulate a successful run
+      - name: Commit formatted files
+        run: |
+          git add . 
+          git commit -m "Running tests"
+      - name: "Test: All files formatted correctly"
         uses: ./
         with:
           terraform_version: 0.14.6
@@ -80,7 +84,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: check if tag already exists
-        run: git fetch --depth=1 origin +refs/tags/*:refs/tags/* && git rev-parse "$(cat VERSION)" >/dev/null 2>&1 && exit 1 || exit 0
+      - name: Check if tag already exists
+        run: |
+          git fetch --tags
+          TAG=$(cat VERSION)
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "Tag $TAG already exists."
+            exit 1
+          fi
