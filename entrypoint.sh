@@ -25,11 +25,17 @@ unzip -o "terraform_${INPUT_TERRAFORM_VERSION}_linux_amd64.zip"
 git config --global --add safe.directory "$PWD"
 
 # Get changed files
-CHANGED_FILES=$(git diff --name-only HEAD HEAD~1)
+if git diff --name-only HEAD HEAD~1 >/dev/null 2>&1; then
+  CHANGED_FILES=$(git diff --name-only HEAD HEAD~1)
+  echo "Using git diff to determine changed files."
+else
+  echo "Unable to determine changed files using git diff. Checking all Terraform files."
+  CHANGED_FILES=$(find . -type f \( -name "*.tf" -o -name "*.tf.json" \))
+fi
 
-# Exit early if no files have changed
+# Exit early if no Terraform files are found or changed
 if [ -z "$CHANGED_FILES" ]; then
-  echo "No Terraform files changed."
+  echo "No Terraform files to check."
   exit 0
 fi
 
@@ -50,14 +56,39 @@ for FILENAME in $CHANGED_FILES; do
     esac
 done
 
+post_comment() {
+  echo "Called post_comment function"
+  if [ "$GITHUB_TOKEN" ]; then
+    # Extract the repository owner and name
+    REPO_FULL_NAME=$(jq -r '.repository.full_name' "$GITHUB_EVENT_PATH")
+    # Extract the pull request number from the GitHub event JSON
+    PR_NUMBER=$(jq -r '.pull_request.number // empty' "$GITHUB_EVENT_PATH")
+    API_URL="https://api.github.com/repos/${REPO_FULL_NAME}/issues/${PR_NUMBER}/comments"
+    echo "Adding comment to PR #$PR_NUMBER in $REPO_FULL_NAME..."
+    JSON_BODY=$(jq -n --arg body "$1" '{body: $body}')
+    curl -X POST -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+       -H "Content-Type: application/json" \
+       -d "$JSON_BODY" \
+       "$API_URL"
+  fi
+}
+
 # Output results
 if [ "$FAILED" = "true" ]; then
     echo "Formatting errors found in the following files:"
     git diff "$CHANGED_FILES"
-    echo "diff=$(git diff "$CHANGED_FILES")" >> "$GITHUB_ENV"
+    COMMENT_BODY=":x: **Formatting errors found in the following files:**\n\n"
+    for FILE in $CHANGED_FILES; do
+      DIFF=$(git diff "$FILE" | jq -Rs '.')
+      COMMENT_BODY="${COMMENT_BODY}${FILE}\n\`\`\`\n${DIFF}\n\`\`\`\n\n"
+    done
+    COMMENT_BODY=$(printf "%s" "$COMMENT_BODY")
+    echo "$COMMENT_BODY"
+    post_comment "$COMMENT_BODY"
     exit 1
 else
-    echo "All Terraform files are properly formatted."
+    echo "diff=All Terraform files are properly formatted." >> "$GITHUB_ENV"
+    post_comment ":white_check_mark: All Terraform files are properly formatted."
 fi
 
 exit 0

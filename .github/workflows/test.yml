@@ -66,6 +66,8 @@ jobs:
         uses: ./
         with:
           terraform_version: 0.14.6
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: "Assert Failed: Non-formatted Terraform file"
         if: steps.failure_step.outcome != 'failure'
         run: exit 1
@@ -79,8 +81,11 @@ jobs:
         uses: ./
         with:
           terraform_version: 0.14.6
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   check_version:
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

@@ -6,11 +6,12 @@ branding:
 inputs:
   terraform_version:
     description: 'The Terraform version to use'
-    default: 1.9.8
     required: true
 outputs:
   diff:
     description: 'The diff of terraform fmt changes'
+  source_diff:
+    description: 'The source of Terraform files (from git HEAD or all terraform files)'
 runs:
   using: 'docker'
   image: 'Dockerfile'
