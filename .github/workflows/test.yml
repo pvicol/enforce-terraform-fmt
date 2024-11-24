@@ -15,69 +15,67 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: setup git
+      - name: Setup Git
         run: |
-          git config --global user.email "${{ github.actor }}"
+          git config --global user.email "${{ github.actor }}@users.noreply.github.com"
           git config --global user.name "${{ github.actor }}"
 
-      # Test: failure when no terraform version is specified
-      - name: Test failure on no terraform version
+      - name: Test failure on no Terraform version
         id: fail_no_version
-        uses: ./
         continue-on-error: true
+        uses: ./
 
-      - name: Check if failure occurred for missing terraform version
-        if: steps.fail_no_version.outcome == 'failure'
+      - name: No Terraform version test failed
+        if: steps.fail_no_version.outcome != 'failure'
         run: exit 1
 
-      # Test: failure for invalid terraform version
-      - name: Test failure on invalid terraform version
+      - name: Test failure on invalid Terraform version
         id: fail_invalid_version
-        uses: ./
         continue-on-error: true
+        uses: ./
         with:
           terraform_version: asdf
 
-      - name: Check if failure occurred for invalid terraform version
-        if: steps.fail_invalid_version.outcome == 'failure'
+      - name: Invalid Terraform version test failed
+        if: steps.fail_invalid_version.outcome != 'failure'
         run: exit 1
 
-      # Test: failure for a missing terraform version
-      - name: Test failure on missing terraform version
+      - name: Test failure on missing Terraform version
         id: fail_missing_version
-        uses: ./
         continue-on-error: true
+        uses: ./
         with:
           terraform_version: 999.999.999
 
-      - name: Check if failure occurred for missing terraform version
-        if: steps.fail_missing_version.outcome == 'failure'
+      - name: Missing Terraform version test failed
+        if: steps.fail_missing_version.outcome != 'failure'
         run: exit 1
 
-      # Modify files and commit
-      - name: Modify test.tf for failure scenario
+      - name: Munge `test.tf` for a failing commit
         run: echo "" >> test.tf
 
-      - name: Commit modified test.tf
-        run: git add . && git commit -m "modify test.tf for test"
+      - name: Commit the munged `test.tf`
+        run: |
+          git add . 
+          git commit -m "Running tests"
 
-      # Test formatting with the modified files
-      - name: Test formatting failure
+      - name: Test failure
         id: failure_step
+        continue-on-error: true
         uses: ./
         with:
           terraform_version: 0.14.6
-        continue-on-error: true
 
-      - name: Check if formatting failed
-        if: steps.failure_step.outcome == 'failure'
+      - name: Failure test failed
+        if: steps.failure_step.outcome != 'failure'
         run: exit 1
 
-      - name: Commit formatted files
-        run: git add . && git commit -m "format test.tf"
+      - name: Commit the newly formatted files
+        run: |
+          git add . 
+          git commit -m "Running tests"
 
-      # Final test to ensure success after formatting
-      - name: Test success after formatting
+      - name: Test success on the new commit
         uses: ./
         with:
           terraform_version: 0.14.6
@@ -87,6 +85,14 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Check if tag already exists
-        run: git fetch --depth=1 origin +refs/tags/*:refs/tags/* && git rev-parse "$(cat VERSION)" >/dev/null 2>&1 && exit 1 || exit 0
+        run: |
+          git fetch --tags
+          TAG=$(cat VERSION)
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "Tag $TAG already exists."
+            exit 1
+          fi
