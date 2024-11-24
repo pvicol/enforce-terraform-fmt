@@ -6,6 +6,7 @@ branding:
 inputs:
   terraform_version:
     description: 'The Terraform version to use'
+    default: 1.9.8
     required: true
 outputs:
   diff:
