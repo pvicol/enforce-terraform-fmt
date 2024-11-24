@@ -13,20 +13,16 @@ if [ "$VERSION" = "0" ]; then
   exit 1
 fi
 
-# Ensure enough commits exist
-if [ "$(git rev-list --count HEAD)" -lt 2 ]; then
-  echo "Not enough commits to compare"
-  exit 0
-fi
-
 # Download and unzip Terraform
 curl -fSL "https://releases.hashicorp.com/terraform/${INPUT_TERRAFORM_VERSION}/terraform_${INPUT_TERRAFORM_VERSION}_linux_amd64.zip" \
---output terraform_${INPUT_TERRAFORM_VERSION}_linux_amd64.zip || {
+--output "terraform_${INPUT_TERRAFORM_VERSION}_linux_amd64.zip" || {
   echo "Failed to download Terraform version ${INPUT_TERRAFORM_VERSION}"
   exit 1
 }
 
-unzip -o terraform_${INPUT_TERRAFORM_VERSION}_linux_amd64.zip
+unzip -o "terraform_${INPUT_TERRAFORM_VERSION}_linux_amd64.zip"
+
+git config --global --add safe.directory "$PWD"
 
 # Get changed files
 CHANGED_FILES=$(git diff --name-only HEAD HEAD~1)
@@ -40,7 +36,7 @@ fi
 # Check Terraform formatting
 FAILED="false"
 for FILENAME in $CHANGED_FILES; do
-    if [[ "$FILENAME" =~ \.(tf|tf\.json)$ ]]; then
+    if [ "$FILENAME" =~ \.(tf|tf\.json)$ ]; then
         RESULT=$(./terraform fmt "$FILENAME" || echo "error")
         if [ "$RESULT" = "$FILENAME" ] || [ "$RESULT" = "error" ]; then
             FAILED="true"
