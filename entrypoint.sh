@@ -38,6 +38,7 @@ FAILED="false"
 for FILENAME in $CHANGED_FILES; do
     case "$FILENAME" in
         *.tf|*.tf.json)
+            echo "Checking formatting for $FILENAME"
             RESULT=$(./terraform fmt "$FILENAME" || echo "error")
             if [ "$RESULT" = "$FILENAME" ] || [ "$RESULT" = "error" ]; then
                 FAILED="true"
@@ -52,7 +53,8 @@ done
 # Output results
 if [ "$FAILED" = "true" ]; then
     echo "Formatting errors found in the following files:"
-    echo "diff=$(git diff $CHANGED_FILES)" >> "$GITHUB_ENV"
+    git diff "$CHANGED_FILES"
+    echo "diff=$(git diff "$CHANGED_FILES")" >> "$GITHUB_ENV"
     exit 1
 else
     echo "All Terraform files are properly formatted."
