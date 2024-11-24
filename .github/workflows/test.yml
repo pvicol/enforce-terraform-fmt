@@ -54,9 +54,7 @@ jobs:
         run: exit 1
 
       - name: Munge `test.tf` for a failing commit
-        run: |
-          sed -i '2s/^[ \t]*//' test.tf
-          cat test.tf
+        run: sed -i '2s/[[:space:]]//g' test.tf
 
       - name: Commit the munged `test.tf`
         run: |
