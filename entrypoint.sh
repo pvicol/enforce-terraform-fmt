@@ -14,6 +14,9 @@ if [ "$VERSION" = "0" ]; then
   exit 1
 fi
 
+# Fix git directory
+git config --global --add safe.directory "$PWD"
+
 # Validate there are enough commits to compare with
 if [ "$(git rev-list --count HEAD)" -lt 2 ]; then
   echo "Not enough commits to compare"
