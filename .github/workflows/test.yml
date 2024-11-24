@@ -12,72 +12,70 @@ jobs:
   run_tests:
     runs-on: ubuntu-latest
     steps:
+      # Check out full depth to compare file changes between commits
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Setup Git
+      - name: Setup Git to allow to commit files in steps
         run: |
           git config --global user.email "${{ github.actor }}@users.noreply.github.com"
           git config --global user.name "${{ github.actor }}"
 
-      - name: Test failure on no Terraform version
+      # Expect a failure when terraform_version is not passed
+      - name: "Test: Terraform version input omitted"
         id: fail_no_version
         continue-on-error: true
         uses: ./
-
-      - name: No Terraform version test failed
+      - name: "Assert Failed: Terraform version input omitted"
         if: steps.fail_no_version.outcome != 'failure'
         run: exit 1
 
-      - name: Test failure on invalid Terraform version
+      # Raise failure when Terraform version is not valid
+      - name: "Test: Invalid Terraform version"
         id: fail_invalid_version
         continue-on-error: true
         uses: ./
         with:
           terraform_version: asdf
-
-      - name: Invalid Terraform version test failed
+      - name: "Assert Failed: Invalid Terraform version"
         if: steps.fail_invalid_version.outcome != 'failure'
         run: exit 1
 
-      - name: Test failure on missing Terraform version
+      # Raise failure when a non-existent Terraform version is passed
+      - name: "Test: Missing (non-existent) Terraform version"
         id: fail_missing_version
         continue-on-error: true
         uses: ./
         with:
           terraform_version: 999.999.999
-
-      - name: Missing Terraform version test failed
+      - name: "Assert Failed: Missing (non-existent) Terraform version"
         if: steps.fail_missing_version.outcome != 'failure'
         run: exit 1
 
-      - name: Munge `test.tf` for a failing commit
+      - name: "Modify test.tf file to introduce a formatting issue"
         run: sed -i '2s/[[:space:]]//g' test.tf
-
       - name: Commit the munged `test.tf`
         run: |
           git add . 
           git commit -m "Running tests"
-
-      - name: Test failure
+      - name: "Test: Non-formatted Terraform file"
         id: failure_step
         continue-on-error: true
         uses: ./
         with:
           terraform_version: 0.14.6
-
-      - name: Failure test failed
+      - name: "Assert Failed: Non-formatted Terraform file"
         if: steps.failure_step.outcome != 'failure'
         run: exit 1
 
-      - name: Commit the newly formatted files
+        # Commit formatted file to simulate a successful run
+      - name: Commit formatted files
         run: |
           git add . 
           git commit -m "Running tests"
-
-      - name: Test success on the new commit
+      - name: "Test: All files formatted correctly"
         uses: ./
         with:
           terraform_version: 0.14.6
