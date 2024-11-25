@@ -1,5 +1,5 @@
-name: 'Enforce Terraform Format (fmt)'
-description: 'Status check which fails if any of the committed files have changes after running `terraform fmt`'
+name: 'Enforce Terraform Format (`terraform fmt`)'
+description: 'A GitHub Action that enforces Terraform formatting standards by running `terraform fmt` on all committed files. The workflow will fail if any files require reformatting.'
 branding:
   icon: code
   color: gray-dark
