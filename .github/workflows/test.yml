@@ -55,7 +55,9 @@ jobs:
         run: exit 1
 
       - name: "Modify test.tf file to introduce a formatting issue"
-        run: sed -i '2s/[[:space:]]//g' test.tf
+        run: |
+          sed -i '2s/[[:space:]]//g' test.tf
+          echo 'resource "random_pet" "test" {length=5}' > pets.tf
       - name: Commit the munged `test.tf`
         run: |
           git add . 
@@ -65,7 +67,7 @@ jobs:
         continue-on-error: true
         uses: ./
         with:
-          terraform_version: 0.14.6
+          terraform_version: 1.9.8
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: "Assert Failed: Non-formatted Terraform file"

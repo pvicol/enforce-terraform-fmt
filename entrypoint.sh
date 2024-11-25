@@ -14,7 +14,7 @@ if [ "$VERSION" = "0" ]; then
 fi
 
 # Download and unzip Terraform
-curl -fSL "https://releases.hashicorp.com/terraform/${INPUT_TERRAFORM_VERSION}/terraform_${INPUT_TERRAFORM_VERSION}_linux_amd64.zip" \
+curl -fSLs "https://releases.hashicorp.com/terraform/${INPUT_TERRAFORM_VERSION}/terraform_${INPUT_TERRAFORM_VERSION}_linux_amd64.zip" \
 --output "terraform_${INPUT_TERRAFORM_VERSION}_linux_amd64.zip" || {
   echo "Failed to download Terraform version ${INPUT_TERRAFORM_VERSION}"
   exit 1
@@ -66,7 +66,7 @@ post_comment() {
     API_URL="https://api.github.com/repos/${REPO_FULL_NAME}/issues/${PR_NUMBER}/comments"
     echo "Adding comment to PR #$PR_NUMBER in $REPO_FULL_NAME..."
     JSON_BODY=$(jq -n --arg body "$1" '{body: $body}')
-    curl -X POST -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+    curl -s -X POST -H "Authorization: Bearer ${GITHUB_TOKEN}" \
        -H "Content-Type: application/json" \
        -d "$JSON_BODY" \
        "$API_URL"
@@ -75,19 +75,16 @@ post_comment() {
 
 # Output results
 if [ "$FAILED" = "true" ]; then
-    echo "Formatting errors found in the following files:"
-    git diff "$CHANGED_FILES"
+    echo "Formatting errors found in the files"
     COMMENT_BODY=":x: **Formatting errors found in the following files:**\n\n"
     for FILE in $CHANGED_FILES; do
       DIFF=$(git diff "$FILE")
       COMMENT_BODY="${COMMENT_BODY}${FILE}\n\`\`\`\n${DIFF}\n\`\`\`\n\n"
     done
     COMMENT_BODY=$(printf "%b" "$COMMENT_BODY")
-    echo "$COMMENT_BODY"
     post_comment "$COMMENT_BODY"
     exit 1
 else
-    echo "diff=All Terraform files are properly formatted." >> "$GITHUB_ENV"
     post_comment ":white_check_mark: All Terraform files are properly formatted."
 fi
 
