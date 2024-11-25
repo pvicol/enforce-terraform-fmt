@@ -79,12 +79,29 @@ jobs:
         run: |
           git add . 
           git commit -m "Running tests"
-      - name: "Test: All files formatted correctly"
+      - name: "Test: All files formatted correctly - post comment"
         uses: ./
         with:
-          terraform_version: 0.14.6
+          terraform_version: 1.9.8
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Print message to console when GitHub Token is not passed
+      - name: "Modify test.tf file to introduce a formatting issue"
+        run: |
+          sed -i '2s/[[:space:]]//g' test.tf
+          echo 'resource "random_pet" "test" {length=5}' > pets.tf
+      - name: Reset changed files
+        run: git checkout .
+      - name: "Test: All files formatted correctly - print to console"
+        id: failure_step_wo_token
+        uses: ./
+        with:
+          terraform_version: 1.9.8
+        continue-on-error: true
+      - name: "Assert Failed: All files formatted correctly - print to console"
+        if: steps.failure_step_wo_token.outcome != 'failure'
+        run: exit 1
 
   check_version:
     if: github.event_name == 'pull_request'
