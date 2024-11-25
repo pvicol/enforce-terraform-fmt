@@ -1,12 +1,15 @@
 name: Tag release
 
 on:
-  push:
-    branches:
-      - main
+  workflow_run:
+    workflows:
+      - 'Run tests'
+    types:
+      - completed
 
 jobs:
   create_tag:
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.ref == 'refs/heads/main' }}  # Run only on main branch after tests pass
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
