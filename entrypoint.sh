@@ -79,7 +79,7 @@ if [ "$FAILED" = "true" ]; then
     git diff "$CHANGED_FILES"
     COMMENT_BODY=":x: **Formatting errors found in the following files:**\n\n"
     for FILE in $CHANGED_FILES; do
-      DIFF=$(git diff "$FILE" | jq -Rs '.')
+      DIFF=$(git diff "$FILE")
       COMMENT_BODY="${COMMENT_BODY}${FILE}\n\`\`\`\n${DIFF}\n\`\`\`\n\n"
     done
     COMMENT_BODY=$(printf "%b" "$COMMENT_BODY")
