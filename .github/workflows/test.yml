@@ -91,8 +91,6 @@ jobs:
         run: |
           sed -i '2s/[[:space:]]//g' test.tf
           echo 'resource "random_pet" "test" {length=5}' > pets.tf
-      - name: Reset changed files
-        run: git checkout .
       - name: "Test: All files formatted correctly - print to console"
         id: failure_step_wo_token
         uses: ./
