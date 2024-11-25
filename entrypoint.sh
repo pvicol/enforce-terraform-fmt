@@ -82,7 +82,7 @@ if [ "$FAILED" = "true" ]; then
       DIFF=$(git diff "$FILE" | jq -Rs '.')
       COMMENT_BODY="${COMMENT_BODY}${FILE}\n\`\`\`\n${DIFF}\n\`\`\`\n\n"
     done
-    COMMENT_BODY=$(printf "%s" "$COMMENT_BODY")
+    COMMENT_BODY=$(printf "%b" "$COMMENT_BODY")
     echo "$COMMENT_BODY"
     post_comment "$COMMENT_BODY"
     exit 1
