@@ -25,3 +25,5 @@ jobs:
           git tag -a -m "$(cat VERSION)" "$(cat VERSION)"
           git push --follow-tags
           gh release create "$(cat VERSION)" -t "Auto-generated release $(cat VERSION)" --generate-notes
+        env:
+          GH_TOKEN: ${{ github.token }}
