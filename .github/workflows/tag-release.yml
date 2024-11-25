@@ -15,13 +15,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: check if tag already exists
+      - name: Check if tag already exists
         run: git fetch --depth=1 origin +refs/tags/*:refs/tags/* && git rev-parse "$(cat VERSION)" >/dev/null 2>&1 && exit 1 || exit 0
 
-      - name: create tag
+      - name: Create tag and release
         run: |
           git config --global user.email "${{ github.actor }}"
           git config --global user.name "${{ github.actor }}"
-          git tag -a -m "$(cat VERSION)" $(cat VERSION)
+          git tag -a -m "$(cat VERSION)" "$(cat VERSION)"
           git push --follow-tags
-          gh release create "$(cat VERSION) -t "Auto-generated release "$(cat VERSION)" --generate-notes
+          gh release create "$(cat VERSION)" -t "Auto-generated release $(cat VERSION)" --generate-notes
