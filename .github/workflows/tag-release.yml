@@ -24,3 +24,4 @@ jobs:
           git config --global user.name "${{ github.actor }}"
           git tag -a -m "$(cat VERSION)" $(cat VERSION)
           git push --follow-tags
+          gh release create "$(cat VERSION) -t "Auto-generated release "$(cat VERSION)" --generate-notes
