@@ -86,7 +86,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: "Assert Failed: Test: All files formatted correctly - post comment"
-        if: steps.success_step_w_token.outcome != 'failure'
+        if: steps.success_step_w_token.outcome == 'failure'
         run: exit 1
 
       # Print message to console when GitHub Token is not passed
@@ -120,7 +120,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: "Assert Failed: All files formatted correctly - print to console"
-        if: steps.success_step_wo_token.outcome != 'failure'
+        if: steps.success_step_wo_token.outcome == 'failure'
         run: exit 1
 
   check_version:
