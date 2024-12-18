@@ -101,8 +101,6 @@ if [ "${FAILED}" = "true" ]; then
           continue
       fi
       DIFF=$(git diff "${FILE}")
-      # Debug: Show the length of the diff
-      echo "Diff length for ${FILE}: $(echo "${DIFF}" | wc -c) bytes"
       COMMENT_BODY="${COMMENT_BODY}${FILE}\n\`\`\`\n${DIFF}\n\`\`\`\n\n"
     done
 
