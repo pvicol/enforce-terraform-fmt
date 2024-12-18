@@ -62,10 +62,10 @@ jobs:
           echo "      " >> example/this-file-is-ignored.json
           cat example/pets.tf
           cat example/this-file-is-ignored.json
-      - name: Commit the munged `test.tf`
+      - name: Commit the changed files - part 1
         run: |
           git add . 
-          git commit -m "Running tests"
+          git commit -m "Running tests - part 1"
       - name: "Test: Non-formatted Terraform file"
         id: failure_step
         continue-on-error: true
@@ -93,6 +93,7 @@ jobs:
       # Print message to console when GitHub Token is not passed
       - name: "Modify test.tf file to introduce a formatting issue"
         run: |
+          git checkout .
           sed -i '2s/[[:space:]]//g' example/test.tf
           sed -i '2s/[[:space:]]//g' test.tf
           echo '    resource "random_pet" "test" {length=5        }' > example/pets.tf
@@ -100,6 +101,10 @@ jobs:
           rm test.tf
           cat example/pets.tf
           cat example/this-file-is-ignored.json
+      - name: Commit the changed files - part 2
+        run: |
+          git add . 
+          git commit -m "Running tests - part 2"
       - name: "Test: All files formatted correctly - print to console"
         id: failure_step_wo_token
         uses: ./

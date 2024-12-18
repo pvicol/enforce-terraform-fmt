@@ -43,6 +43,11 @@ fi
 # Check Terraform formatting
 FAILED="false"
 for FILENAME in $CHANGED_FILES; do
+    # Skip deleted files
+    if [ ! -f "$FILENAME" ]; then
+        echo "Skipping deleted file: ${FILENAME}"
+        continue
+    fi
     case "$FILENAME" in
         *.tf|*.tf.json)
             echo "Checking formatting for ${FILENAME}"
@@ -51,6 +56,7 @@ for FILENAME in $CHANGED_FILES; do
                 FAILED="true"
                 echo "${FILENAME} failed formatting."
             else
+                FAILED="false"
                 echo "${FILENAME} is properly formatted."
             fi
             ;;
@@ -80,7 +86,7 @@ post_comment() {
        "${API_URL}"
   else
     # If Github token is not passed, print result to screen
-    printf "%b" "${1}"
+    echo $1
   fi
 }
 
@@ -89,17 +95,19 @@ if [ "${FAILED}" = "true" ]; then
     echo "Formatting errors found in the files"
     COMMENT_BODY=":x: **Formatting errors found in the following files:**\n\n"
     for FILE in $CHANGED_FILES; do
+      # Skip deleted files
+      if [ ! -f "${FILE}" ]; then
+          echo "Skipping deleted file: ${FILE}"
+          continue
+      fi
       DIFF=$(git diff "${FILE}")
       # Debug: Show the length of the diff
-      echo "Diff length for ${FILE}: $(echo "$DIFF" | wc -c) bytes"
+      echo "Diff length for ${FILE}: $(echo "${DIFF}" | wc -c) bytes"
       COMMENT_BODY="${COMMENT_BODY}${FILE}\n\`\`\`\n${DIFF}\n\`\`\`\n\n"
-      echo "Raw diff content:"
-      git diff HEAD -- "${FILE}"
     done
 
     # Render new lines before passing as payload to API
     COMMENT_BODY=$(printf "%b" "${COMMENT_BODY}")
-    echo "Debug: Comment body: ${COMMENT_BODY}"
     post_comment "${COMMENT_BODY}"
     exit 1
 else
