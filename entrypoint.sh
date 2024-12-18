@@ -90,8 +90,6 @@ post_comment() {
   fi
 }
 
-echo "DEBUG: Failed status is ${FAILED}"
-
 # Output results
 if [ "${FAILED}" = "true" ]; then
     echo "Formatting errors found in the files"
