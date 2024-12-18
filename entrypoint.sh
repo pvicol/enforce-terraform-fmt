@@ -90,6 +90,8 @@ post_comment() {
   fi
 }
 
+echo "DEBUG: Failed status is ${FAILED}"
+
 # Output results
 if [ "${FAILED}" = "true" ]; then
     echo "Formatting errors found in the files"
@@ -110,6 +112,5 @@ if [ "${FAILED}" = "true" ]; then
     exit 1
 else
     post_comment ":white_check_mark: All Terraform files are properly formatted."
+    exit 0
 fi
-
-exit 0
