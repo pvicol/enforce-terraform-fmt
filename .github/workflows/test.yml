@@ -54,51 +54,73 @@ jobs:
         if: steps.fail_missing_version.outcome != 'failure'
         run: exit 1
 
-      - name: "Modify test.tf file to introduce a formatting issue"
+      - name: "Modify files to introduce a formatting issue - With Token Part 1"
         run: |
+          sed -i '2s/[[:space:]]//g' example/test.tf
           sed -i '2s/[[:space:]]//g' test.tf
-          echo 'resource "random_pet" "test" {length=5}' > pets.tf
-      - name: Commit the munged `test.tf`
-        run: |
+          echo '    resource "random_pet" "test" {length=5        }' > example/pets.tf
+          echo "      " >> example/this-file-is-ignored.json
           git add . 
-          git commit -m "Running tests"
-      - name: "Test: Non-formatted Terraform file"
-        id: failure_step
+          git commit -m "Running tests with token - part 1"
+      - name: "Test: Non-formatted Terraform file - With Token Part 1"
+        id: failure_step_w_token
         continue-on-error: true
         uses: ./
         with:
           terraform_version: 1.9.8
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: "Assert Failed: Non-formatted Terraform file"
-        if: steps.failure_step.outcome != 'failure'
+      - name: "Assert Failed: Non-formatted Terraform file - With Token Part 2"
+        if: steps.failure_step_w_token.outcome != 'failure'
         run: exit 1
 
-        # Commit formatted file to simulate a successful run
-      - name: Commit formatted files
+      - name: "Commit formatted file to simulate a successful run - With Token Part 2"
         run: |
           git add . 
-          git commit -m "Running tests"
+          git commit -m "Running tests with token - part 2"
       - name: "Test: All files formatted correctly - post comment"
+        id: success_step_w_token
         uses: ./
         with:
           terraform_version: 1.9.8
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: "Assert Failed: Test: All files formatted correctly - post comment"
+        if: steps.success_step_w_token.outcome == 'failure'
+        run: exit 1
 
       # Print message to console when GitHub Token is not passed
-      - name: "Modify test.tf file to introduce a formatting issue"
+      - name: "Modify files to introduce a formatting issue - W/O Token Part 1"
         run: |
-          sed -i '2s/[[:space:]]//g' test.tf
-          echo 'resource "random_pet" "test" {length=5}' > pets.tf
-      - name: "Test: All files formatted correctly - print to console"
+          sed -i '2s/[[:space:]]//g' example/test.tf
+          echo '    resource "random_pet" "test" {length=5        }' > example/pets.tf
+          echo "      " >> example/this-file-is-ignored.json
+          echo "this text file will be ignored by terraform_fmt" > example/this-file-is-ignored.txt
+          rm test.tf
+          git add . 
+          git commit -m "Running tests w/o token - part 1"
+      - name: "Test: Non-formatted Terraform file - print to console"
         id: failure_step_wo_token
         uses: ./
         with:
           terraform_version: 1.9.8
         continue-on-error: true
-      - name: "Assert Failed: All files formatted correctly - print to console"
+      - name: "Assert Failed: Non-formatted Terraform file - print to console"
         if: steps.failure_step_wo_token.outcome != 'failure'
+        run: exit 1
+      - name: "Commit formatted file to simulate a successful run - W/O Token Part 2"
+        run: |
+          git add . 
+          git commit -m "Running tests w/o token - part 2"
+      - name: "Test: All files formatted correctly - print to console"
+        id: success_step_wo_token
+        uses: ./
+        with:
+          terraform_version: 1.9.8
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: "Assert Failed: All files formatted correctly - print to console"
+        if: steps.success_step_wo_token.outcome == 'failure'
         run: exit 1
 
   check_version:

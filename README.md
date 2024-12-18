@@ -8,6 +8,15 @@ A GitHub Action that enforces Terraform formatting standards by running `terrafo
 * Posts detailed comments on pull requests highlighting formatting issues when the `GITHUB_TOKEN` is provided.
 * Ensures consistency across Terraform codebases.
 
+## Permissions Scopes
+
+The following permissions scopes are needed:
+
+| Permission      | Level   | Description                                               |
+|-----------------|---------|-----------------------------------------------------------|
+| `contents`      | `read`  | Work with the contents of the repository and list commits |
+| `pull-requests` | `write` | Add comments to the Pull Request                          |
+
 ## Pull Request Comments
 
 When the `GITHUB_TOKEN` is passed, the action posts a comment to the pull request. The comment includes:
@@ -48,6 +57,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      pull-requests: write
     steps:
       - name: Checkout the contents
         uses: actions/checkout@v4

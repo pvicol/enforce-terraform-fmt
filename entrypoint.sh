@@ -27,7 +27,7 @@ git config --global --add safe.directory "${PWD}"
 
 # Get changed files
 if git diff --name-only HEAD HEAD~1 >/dev/null 2>&1; then
-  CHANGED_FILES=$(git diff --name-only HEAD HEAD~1)
+  CHANGED_FILES=$(git diff --name-only HEAD HEAD~1 | grep -E '\.(tf|tf\.json)$')
   echo "Using git diff to determine changed files."
 else
   echo "Unable to determine changed files using git diff. Checking all Terraform files."
@@ -43,6 +43,11 @@ fi
 # Check Terraform formatting
 FAILED="false"
 for FILENAME in $CHANGED_FILES; do
+    # Skip deleted files
+    if [ ! -f "$FILENAME" ]; then
+        echo "Skipping deleted file: ${FILENAME}"
+        continue
+    fi
     case "$FILENAME" in
         *.tf|*.tf.json)
             echo "Checking formatting for ${FILENAME}"
@@ -51,6 +56,7 @@ for FILENAME in $CHANGED_FILES; do
                 FAILED="true"
                 echo "${FILENAME} failed formatting."
             else
+                FAILED="false"
                 echo "${FILENAME} is properly formatted."
             fi
             ;;
@@ -89,6 +95,11 @@ if [ "${FAILED}" = "true" ]; then
     echo "Formatting errors found in the files"
     COMMENT_BODY=":x: **Formatting errors found in the following files:**\n\n"
     for FILE in $CHANGED_FILES; do
+      # Skip deleted files
+      if [ ! -f "${FILE}" ]; then
+          echo "Skipping deleted file: ${FILE}"
+          continue
+      fi
       DIFF=$(git diff "${FILE}")
       COMMENT_BODY="${COMMENT_BODY}${FILE}\n\`\`\`\n${DIFF}\n\`\`\`\n\n"
     done
@@ -99,6 +110,5 @@ if [ "${FAILED}" = "true" ]; then
     exit 1
 else
     post_comment ":white_check_mark: All Terraform files are properly formatted."
+    exit 0
 fi
-
-exit 0
