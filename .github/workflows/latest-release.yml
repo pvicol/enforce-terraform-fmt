@@ -1,8 +1,8 @@
 name: Latest Tag Updates
 on:
-  release:
-    types: [published]
-
+  push:
+    tags:
+      - 'v*'
 jobs:
   run:
     permissions:
