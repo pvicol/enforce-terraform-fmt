@@ -86,7 +86,7 @@ post_comment() {
        "${API_URL}"
   else
     # If Github token is not passed, print result to screen
-    echo $1
+    echo "${1}"
   fi
 }
 
