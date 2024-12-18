@@ -27,7 +27,7 @@ git config --global --add safe.directory "${PWD}"
 
 # Get changed files
 if git diff --name-only HEAD HEAD~1 >/dev/null 2>&1; then
-  CHANGED_FILES=$(git diff --name-only HEAD HEAD~1)
+  CHANGED_FILES=$(git diff --name-only HEAD HEAD~1 | grep -E '\.(tf|tf\.json)$')
   echo "Using git diff to determine changed files."
 else
   echo "Unable to determine changed files using git diff. Checking all Terraform files."
@@ -80,7 +80,7 @@ post_comment() {
        "${API_URL}"
   else
     # If Github token is not passed, print result to screen
-    echo "${1}"
+    printf "%b" "${1}"
   fi
 }
 
@@ -90,11 +90,16 @@ if [ "${FAILED}" = "true" ]; then
     COMMENT_BODY=":x: **Formatting errors found in the following files:**\n\n"
     for FILE in $CHANGED_FILES; do
       DIFF=$(git diff "${FILE}")
+      # Debug: Show the length of the diff
+      echo "Diff length for ${FILE}: $(echo "$DIFF" | wc -c) bytes"
       COMMENT_BODY="${COMMENT_BODY}${FILE}\n\`\`\`\n${DIFF}\n\`\`\`\n\n"
+      echo "Raw diff content:"
+      git diff HEAD -- "${FILE}"
     done
 
     # Render new lines before passing as payload to API
     COMMENT_BODY=$(printf "%b" "${COMMENT_BODY}")
+    echo "Debug: Comment body: ${COMMENT_BODY}"
     post_comment "${COMMENT_BODY}"
     exit 1
 else
