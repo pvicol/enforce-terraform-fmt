@@ -1,10 +1,17 @@
-# Container image that runs your code
-FROM alpine:latest
+FROM python:3.13-alpine
 
-RUN apk update --no-cache && apk add --no-cache curl unzip git jq
+RUN apk update --no-cache && apk add --no-cache git
 
-# Copies your code file from your action repository to the filesystem path `/` of the container
-COPY entrypoint.sh /entrypoint.sh
+# Set working directory
+WORKDIR /app
+
+# Copy requirements file
+COPY requirements.txt .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY enforce_tf_fmt.py .
 
 # Code file to execute when the docker container starts up (`entrypoint.sh`)
-ENTRYPOINT ["/entrypoint.sh"]
+CMD ["python", "/app/enforce_tf_fmt.py"]

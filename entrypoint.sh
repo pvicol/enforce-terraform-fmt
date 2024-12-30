@@ -1,4 +1,4 @@
-#!/bin/sh -l
+#!/bin/bash
 set -e
 
 # Validate input
@@ -7,11 +7,11 @@ if [ -z "${INPUT_TERRAFORM_VERSION}" ]; then
   exit 1
 fi
 
-VERSION=$(expr "${INPUT_TERRAFORM_VERSION}" : "[0-9]\+\.[0-9]\+\.[0-9]\+")
-if [ "${VERSION}" = "0" ]; then
-  echo "Invalid Terraform version specified"
-  exit 1
+if [[ ! "$INPUT_TERRAFORM_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+    echo "Invalid Terraform version specified"
+    exit 1
 fi
+
 
 # Download and unzip Terraform
 curl -fSLs "https://releases.hashicorp.com/terraform/${INPUT_TERRAFORM_VERSION}/terraform_${INPUT_TERRAFORM_VERSION}_linux_amd64.zip" \
@@ -51,12 +51,10 @@ for FILENAME in $CHANGED_FILES; do
     case "$FILENAME" in
         *.tf|*.tf.json)
             echo "Checking formatting for ${FILENAME}"
-            RESULT=$(./terraform fmt "$FILENAME" || echo "error")
-            if [ "${RESULT}" = "${FILENAME}" ] || [ "${RESULT}" = "error" ]; then
+            if ! ./terraform fmt -check -diff "$FILENAME"; then
                 FAILED="true"
                 echo "${FILENAME} failed formatting."
             else
-                FAILED="false"
                 echo "${FILENAME} is properly formatted."
             fi
             ;;

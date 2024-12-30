@@ -1,0 +1,36 @@
+name: Test and Coverage
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Build and run tests with coverage
+        run: |
+          docker build -t bash-test -f Dockerfile-coverage .
+          docker run --name test-container bash-test
+
+      - name: Extract coverage report
+        run: |
+          docker cp test-container:/app/coverage ./coverage
+
+      - name: Upload coverage reports
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-report
+          path: coverage
+
+      - name: Display coverage summary
+        run: |
+          if [ -f coverage/*/coverage.json ]; then
+            COVERAGE=$(cat coverage/*/coverage.json | jq -r '.percent_covered')
+            echo "Coverage: $COVERAGE%"
+            echo "coverage=$COVERAGE" >> $GITHUB_ENV
+          else
+            echo "No coverage report found"
+            exit 1
+          fi

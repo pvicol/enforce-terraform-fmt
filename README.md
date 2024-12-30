@@ -2,6 +2,10 @@
 
 A GitHub Action that enforces Terraform formatting standards by running `terraform fmt` on all committed files. The workflow will fail if any files require reformatting.
 
+|                                                                                              Build                                                                                               | Tests | Coverage |
+|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|:-:|:-:|
+|![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/pvicol/enforce-terraform-fmt/.github%2Fworkflows%2Ftest.yml?branch=main&logo=esbuild&label=Build%20Status)|||
+
 ## Features
 
 * Automatically checks Terraform file formatting on each pull request.

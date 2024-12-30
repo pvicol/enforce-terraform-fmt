@@ -1,3 +1,14 @@
+# Python
+lib/
+bin/
+include/
+coverage/
+pyvenv.cfg
+__pycache__/
+
 # IDEs
 .idea
 .vscode
+
+# MacOS
+.DS_Store

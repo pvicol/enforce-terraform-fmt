@@ -1,0 +1,21 @@
+# Use Python 3.11 slim image as base
+FROM python:3.12-alpine
+
+# Install git and other required system dependencies
+RUN apk update --no-cache && apk add git --no-cache
+
+# Set working directory
+WORKDIR /app
+
+# Copy requirements file
+COPY requirements.txt .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy source code and tests
+COPY enforce_tf_fmt.py .
+COPY test_enforce_tf_fmt.py .
+
+# Run tests when container starts
+CMD ["python", "-m", "unittest", "test_enforce_tf_fmt.py", "-v"]
